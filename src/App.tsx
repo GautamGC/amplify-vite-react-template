@@ -1,40 +1,54 @@
-import { useEffect, useState } from "react";
-import type { Schema } from "../amplify/data/resource";
-import { generateClient } from "aws-amplify/data";
+// App.tsx
+import React from 'react';
+import './App.css';
+import Amplify from 'aws-amplify';
+import { Authenticator, withAuthenticator } from '@aws-amplify/ui-react';
+import '@aws-amplify/ui-react/styles.css';
+import { awsExports } from './aws-exports';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import YouTubeHomePage from './YouTubeHomePage';
+import VideoPage from './VideoPage';
 
-const client = generateClient<Schema>();
+// Configures AWS Amplify with the settings from aws-exports.js.
+Amplify.configure(awsExports);
 
-function App() {
-  const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([]);
-
-  useEffect(() => {
-    client.models.Todo.observeQuery().subscribe({
-      next: (data) => setTodos([...data.items]),
-    });
-  }, []);
-
-  function createTodo() {
-    client.models.Todo.create({ content: window.prompt("Todo content") });
-  }
-
+const App: React.FC = () => {
   return (
-    <main>
-      <h1>My todos</h1>
-      <button onClick={createTodo}>+ new</button>
-      <ul>
-        {todos.map((todo) => (
-          <li key={todo.id}>{todo.content}</li>
-        ))}
-      </ul>
-      <div>
-        🥳 App successfully hosted. Try creating a new todo.
-        <br />
-        <a href="https://docs.amplify.aws/react/start/quickstart/#make-frontend-updates">
-          Review next step of this tutorial.
-        </a>
-      </div>
-    </main>
-  );
-}
+    <div className="App">
+      <Authenticator>
+        {({ signOut }) => (
+          <main>
+            <header className="App-header">
+              {/* Setting up React Router for navigation */}
+              <Router>
+                <Routes>
+                  {/* Route for the homepage */}
+                  <Route path="/" element={<YouTubeHomePage />} />
 
-export default App;
+                  {/* Route for individual video pages with dynamic video ID */}
+                  <Route path="/video/:id" element={<VideoPage />} />
+                </Routes>
+              </Router>
+
+              {/* Sign Out button */}
+              <button
+                onClick={signOut}
+                style={{
+                  margin: '20px',
+                  fontSize: '0.8rem',
+                  padding: '5px 10px',
+                  marginTop: '20px',
+                }}
+              >
+                Sign Out
+              </button>
+            </header>
+          </main>
+        )}
+      </Authenticator>
+    </div>
+  );
+};
+
+// Wrap the App component with withAuthenticator for authentication
+export default withAuthenticator(App);
